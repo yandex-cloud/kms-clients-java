@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.yandex.cloud</groupId>
+    <artifactId>kms-external-clients</artifactId>
+    <version>1.0</version>
+    <packaging>pom</packaging>
+
+    <name>Java clients for YC KMS</name>
+    <description>External java clients for Yandex Cloud Key Management Service</description>
+    <url>https://github.com/yandex-cloud/kms-clients-java</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/yandex-cloud/kms-clients-java.git</connection>
+        <developerConnection>scm:git:https://github.com/yandex-cloud/kms-clients-java.git</developerConnection>
+        <url>https://github.com/yandex-cloud/kms-clients-java/tree/master</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Alexey Zakharov</name>
+            <email>ayza@yandex-team.ru</email>
+            <organization>Yandex LLC</organization>
+            <organizationUrl>https://yandex.com/company/</organizationUrl>
+        </developer>
+    </developers>
+
+    <properties>
+        <java.verison>8</java.verison>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <commons-io.version>2.6</commons-io.version>
+        <commons-lang3.version>3.9</commons-lang3.version>
+        <commons-codec.version>1.11</commons-codec.version>
+
+        <java-sdk.version>1.2.1</java-sdk.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.yandex.cloud</groupId>
+                <artifactId>sdk</artifactId>
+                <version>${java-sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons-codec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <modules>
+        <module>kms-provider-awsCrypto</module>
+        <module>kms-provider-tink</module>
+    </modules>
+
+</project>

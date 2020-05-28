@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.yandex.cloud</groupId>
+    <artifactId>kms-provider-awscrypto</artifactId>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>com.yandex.cloud</groupId>
+        <artifactId>kms-external-clients</artifactId>
+        <version>1.0</version>
+        <relativePath>..</relativePath>
+    </parent>
+
+    <properties>
+        <kms-http-client.version>1.0</kms-http-client.version>
+        <aws-crypto.version>1.6.0</aws-crypto.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.yandex.cloud</groupId>
+            <artifactId>sdk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-encryption-sdk-java</artifactId>
+            <version>${aws-crypto.version}</version>
+            <optional>true</optional>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-ext-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
