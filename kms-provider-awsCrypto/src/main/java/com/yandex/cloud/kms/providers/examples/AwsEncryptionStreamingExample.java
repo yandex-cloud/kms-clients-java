@@ -33,14 +33,16 @@ public class AwsEncryptionStreamingExample {
         File decryptedFile = ExampleUtil.fileWithSuffix(plaintextFile, ".decrypted");
 
         encryptToFile(credentials, keyId, plaintextFile, encryptedFile);
-        System.out.println("Ciphertext file: " + encryptedFile.toString());
-        System.out.println("Ciphertext file length: " + Files.size(encryptedFile.toPath()));
+        System.out.printf("Ciphertext file: %s\n", encryptedFile.toString());
+        System.out.printf("Ciphertext file length: %d\n", Files.size(encryptedFile.toPath()));
 
         decryptFromFile(credentials, encryptedFile, decryptedFile);
-        System.out.println("Decrypted file: " + decryptedFile.toString());
-        System.out.println("Decrypted file length: " + Files.size(decryptedFile.toPath()));
+        System.out.printf("Decrypted file: %s\n", decryptedFile.toString());
+        System.out.printf("Decrypted file length: %d\n", Files.size(decryptedFile.toPath()));
 
-        Validate.isTrue(FileUtils.contentEquals(plaintextFile, decryptedFile), "Decrypted text differs from original plaintext!!");
+        Validate.isTrue(FileUtils.contentEquals(plaintextFile, decryptedFile),
+                "Test FAILED: decrypted text differs from original plaintext");
+        System.out.println("Test PASSED");
     }
 
     /*

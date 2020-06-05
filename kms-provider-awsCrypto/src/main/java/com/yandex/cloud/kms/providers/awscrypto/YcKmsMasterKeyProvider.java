@@ -6,8 +6,6 @@ import com.amazonaws.encryptionsdk.EncryptedDataKey;
 import com.amazonaws.encryptionsdk.MasterKey;
 import com.amazonaws.encryptionsdk.MasterKeyProvider;
 import com.amazonaws.encryptionsdk.MasterKeyRequest;
-import com.amazonaws.encryptionsdk.exception.AwsCryptoException;
-import com.amazonaws.encryptionsdk.exception.NoSuchMasterKeyException;
 import com.amazonaws.encryptionsdk.exception.UnsupportedProviderException;
 import yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc;
 import yandex.cloud.sdk.ServiceFactory;
@@ -24,6 +22,10 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * Provider for constructing YcKmsMasterKey objects.
+ * Holds endpoint and credentials information for YC KMS installation to be used.
+ */
 public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
     static final String PROVIDER_NAME = "yc-kms";
 

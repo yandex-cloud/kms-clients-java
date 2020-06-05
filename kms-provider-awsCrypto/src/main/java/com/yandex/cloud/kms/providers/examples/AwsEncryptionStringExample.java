@@ -7,7 +7,7 @@ import yandex.cloud.sdk.auth.Credentials;
 import yandex.cloud.sdk.auth.OauthToken;
 
 /**
- * Simple string encryption / decryption example using YC KMS provider for AWS Encryption SDK
+ * Basic string encryption / decryption example using YC KMS provider for AWS Encryption SDK
  */
 public class AwsEncryptionStringExample {
 
@@ -19,14 +19,16 @@ public class AwsEncryptionStringExample {
         Credentials credentials = new OauthToken(token);
 
         String encrypted = encrypt(credentials, keyId, plaintext);
-        System.out.println("Ciphertext: " + encrypted);
-        System.out.println("Ciphertext length: " + encrypted.length());
+        System.out.printf("Ciphertext: %s\n", encrypted);
+        System.out.printf("Ciphertext length: %d\n", encrypted.length());
 
         String decrypted = decrypt(credentials, encrypted);
-        System.out.println("Decrypted: " + decrypted);
-        System.out.println("Decrypted length: " + decrypted.length());
+        System.out.printf("Decrypted: %s\n", decrypted);
+        System.out.printf("Decrypted length: %d\n", decrypted.length());
 
-        Validate.isTrue(decrypted.equals(plaintext), "Decrypted text differs from original plaintext!!");
+        Validate.isTrue(decrypted.equals(plaintext),
+                "Test FAILED: decrypted text differs from original plaintext");
+        System.out.println("Test PASSED");
     }
 
     /*

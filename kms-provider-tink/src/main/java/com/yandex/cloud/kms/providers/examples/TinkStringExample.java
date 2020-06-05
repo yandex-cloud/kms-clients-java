@@ -14,6 +14,10 @@ import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Base64;
 
+/**
+ * This example demonstrates how to use YC KMS provider for Tink to encrypt single string using
+ * basic encryption scheme as well as envelope encryption.
+ */
 public class TinkStringExample {
     private static final String YCKMS_OAUTH = "YCKMS_OAUTH";
 
@@ -21,7 +25,7 @@ public class TinkStringExample {
         Validate.isTrue(args.length >= 2, "Invalid number of arguments");
 
         // prepare data
-        String keyId = "yc-kms://" + args[0];
+        String keyId = String.format("yc-kms://%s", args[0]);
         byte[] plaintext = args[1].getBytes(Charsets.UTF_8);
         byte[] context = "Foo: Bar".getBytes(Charsets.UTF_8);
 
@@ -59,12 +63,9 @@ public class TinkStringExample {
         byte[] decryptedText = decryptAead.decrypt(ciphertext, context);
         System.out.printf("Decrypted text: %s\n", new String(decryptedText));
 
-        if (Arrays.equals(plaintext, decryptedText)) {
-            System.out.println("Decrypted text equals to original plaintext!");
-        } else {
-            System.out.println("Decrypted text differs from original plaintext!");
-        }
-
+        Validate.isTrue(Arrays.equals(plaintext, decryptedText),
+                "Test FAILED: decrypted text differs from the original plaintext");
+        System.out.println("Test PASSED");
     }
 
 }

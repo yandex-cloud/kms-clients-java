@@ -4,8 +4,6 @@ import com.amazonaws.encryptionsdk.CryptoAlgorithm;
 import com.amazonaws.encryptionsdk.DataKey;
 import com.amazonaws.encryptionsdk.EncryptedDataKey;
 import com.amazonaws.encryptionsdk.MasterKey;
-import com.amazonaws.encryptionsdk.exception.AwsCryptoException;
-import com.amazonaws.encryptionsdk.exception.UnsupportedProviderException;
 import com.google.protobuf.ByteString;
 import org.apache.commons.lang3.NotImplementedException;
 import yandex.cloud.api.kms.v1.SymmetricKeyOuterClass;
@@ -26,6 +24,9 @@ import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.Symmetric
 import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricEncryptResponse;
 import static yandex.cloud.api.kms.v1.SymmetricKeyOuterClass.SymmetricAlgorithm;
 
+/**
+ * Represents single YC KMS key, can be used to perform encrypt/decrypt operations
+ */
 public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
 
     private final SymmetricCryptoServiceBlockingStub kmsCryptoService;
@@ -47,11 +48,10 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
     }
 
     /**
-     * Redirects generateDataKey request to YC KMS API
-     * @param awsAlgorithm cryptographic algorithm to be used for encryption; will be converted to the
-     *                     version of algorithm supported by YC KMS
+     * Sends generateDataKey request to remote KMS
+     * @param awsAlgorithm cryptographic algorithm to create data key for, only data key length is important
      * @param encryptionContext AAD context to be used for data key encryption
-     * @return generated data key - both plaintext and encrypted form
+     * @return generated data key encrypted on KMS key - both plaintext and ciphertext
      */
     @Override
     public DataKey<YcKmsMasterKey> generateDataKey(CryptoAlgorithm awsAlgorithm, Map<String, String> encryptionContext) {
@@ -70,17 +70,16 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
     }
 
     /**
-     * Sends encrypt request to YC KMS API
-     * @param algorithm cryptographic algorithm to be used for encryption; will be converted to the
-     *                  version of algorithm supported by YC KMS
+     * Encrypts data key with remote KMS key
+     * @param algorithm ignored; remote KMS key algorithm will really be used for encryption
      * @param encryptionContext AAD context to be used for encryption
      * @param dataKey data key to be encrypted
-     * @return data key encrypted by YC KMS
+     * @return data key encrypted with KMS key
      */
     @Override
     public DataKey<YcKmsMasterKey> encryptDataKey(CryptoAlgorithm algorithm, Map<String, String> encryptionContext,
                                                   DataKey<?> dataKey) {
-        // FIXME let's just ignore the algorithm param
+        // algorithm param is here only for compatibility reasons and is currently ignored
         SymmetricEncryptRequest request = SymmetricEncryptRequest.newBuilder()
                 .setKeyId(this.keyId)
                 .setPlaintext(ByteString.copyFrom(dataKey.getKey().getEncoded()))
@@ -94,16 +93,14 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
     }
 
     /**
-     *
-     * @param algorithm cryptographic algorithm to be used for decryption; will be converted to the
-     *                  version of algorithm supported by YC KMS
-     * @param encryptedDataKeys collection of encrypted data keys to be used
+     * Decrypts encrypted data key with KMS key
+     * @param algorithm cryptographic algorithm to be set in returned data key metadata
+     * @param encryptedDataKeys collection of encrypted data keys to try
      * @param encryptionContext AAD context to be used for decryption
-     * @return the first data key from the supplied collection that was successfully decrypted
+     * @return the first data key from the supplied collection that was decrypted successfully
      */
     @Override
     public DataKey<YcKmsMasterKey> decryptDataKey(CryptoAlgorithm algorithm, Collection<? extends EncryptedDataKey> encryptedDataKeys, Map<String, String> encryptionContext) {
-        // FIXME let's just ignore algorithm param
         for (EncryptedDataKey encryptedKey : encryptedDataKeys) {
             SymmetricDecryptRequest request = SymmetricDecryptRequest.newBuilder()
                     .setKeyId(this.keyId)
@@ -126,22 +123,23 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
     }
 
     private static SymmetricKeyOuterClass.SymmetricAlgorithm convertAlgorithm(CryptoAlgorithm algorithm) {
+        // we care only about data key length, all other algorithm details are redundant here
         switch (algorithm) {
             case ALG_AES_128_GCM_IV12_TAG16_NO_KDF:
-            case ALG_AES_128_GCM_IV12_TAG16_HKDF_SHA256: //FIXME
-            case ALG_AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256: //FIXME
+            case ALG_AES_128_GCM_IV12_TAG16_HKDF_SHA256:
+            case ALG_AES_128_GCM_IV12_TAG16_HKDF_SHA256_ECDSA_P256:
                 return SymmetricAlgorithm.AES_128;
             case ALG_AES_192_GCM_IV12_TAG16_NO_KDF:
-            case ALG_AES_192_GCM_IV12_TAG16_HKDF_SHA256: //FIXME
-            case ALG_AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384: //FIXME
+            case ALG_AES_192_GCM_IV12_TAG16_HKDF_SHA256:
+            case ALG_AES_192_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384:
                 return SymmetricAlgorithm.AES_192;
             case ALG_AES_256_GCM_IV12_TAG16_NO_KDF:
-            case ALG_AES_256_GCM_IV12_TAG16_HKDF_SHA256: //FIXME
-            case ALG_AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384: //FIXME
+            case ALG_AES_256_GCM_IV12_TAG16_HKDF_SHA256:
+            case ALG_AES_256_GCM_IV12_TAG16_HKDF_SHA384_ECDSA_P384:
                 return SymmetricAlgorithm.AES_256;
             default:
-                throw new NotImplementedException(String.format("Algorithm %s not supported by YC KMS",
-                        algorithm.name()));
+                throw new NotImplementedException(
+                        String.format("Algorithm %s not supported by YC KMS", algorithm.name()));
         }
     }
 

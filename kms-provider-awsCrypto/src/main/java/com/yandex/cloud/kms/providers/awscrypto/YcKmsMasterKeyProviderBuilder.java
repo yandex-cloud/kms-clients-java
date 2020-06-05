@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
+/**
+ * Builder for constructing YcKmsMasterKeyProvider objects
+ */
 public class YcKmsMasterKeyProviderBuilder {
     private String host;
     private int port;

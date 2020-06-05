@@ -7,14 +7,13 @@ import com.google.crypto.tink.KmsClient;
 import com.google.crypto.tink.KmsClients;
 import com.google.crypto.tink.aead.AeadConfig;
 import com.google.crypto.tink.aead.AeadKeyTemplates;
-import org.apache.commons.lang3.Validate;
 import com.yandex.cloud.kms.providers.tink.YcKmsClient;
+import org.apache.commons.lang3.Validate;
 import yandex.cloud.sdk.auth.Auth;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 
@@ -26,7 +25,7 @@ public class TinkFileExample {
 
     public static void main(String[] args) throws GeneralSecurityException, IOException {
         Validate.isTrue(args.length >= 2, "Invalid number of arguments");
-        String ycKmsKeyId = "yc-kms://" + args[0]; // key id as a first argument
+        String ycKmsKeyId = String.format("yc-kms://%s", args[0]); // key id as a first argument
         String filename = args[1]; // key store file name to be created as a second argument
 
         // first let's register our YC KMS client with Tink clients' registry
