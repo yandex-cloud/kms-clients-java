@@ -30,7 +30,6 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-encryption-sdk-java</artifactId>
             <version>${aws-crypto.version}</version>
-            <optional>true</optional>
             <exclusions>
                 <exclusion>
                     <groupId>org.bouncycastle</groupId>

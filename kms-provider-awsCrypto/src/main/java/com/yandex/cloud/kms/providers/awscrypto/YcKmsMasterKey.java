@@ -46,13 +46,20 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
         return keyId;
     }
 
+    /**
+     * Redirects generateDataKey request to YC KMS API
+     * @param awsAlgorithm cryptographic algorithm to be used for encryption; will be converted to the
+     *                     version of algorithm supported by YC KMS
+     * @param encryptionContext AAD context to be used for data key encryption
+     * @return generated data key - both plaintext and encrypted form
+     */
     @Override
     public DataKey<YcKmsMasterKey> generateDataKey(CryptoAlgorithm awsAlgorithm, Map<String, String> encryptionContext) {
         SymmetricAlgorithm algorithm = convertAlgorithm(awsAlgorithm);
         GenerateDataKeyRequest request = GenerateDataKeyRequest.newBuilder()
                 .setKeyId(this.keyId)
                 .setDataKeySpec(algorithm)
-                .setAadContext(ByteString.copyFrom(encryptionContext == null ? null : convertEncryptionContext(encryptionContext)))
+                .setAadContext(ByteString.copyFrom(convertEncryptionContext(encryptionContext)))
                 .setSkipPlaintext(false)
                 .build();
         GenerateDataKeyResponse response = kmsCryptoService.generateDataKey(request);
@@ -62,6 +69,14 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
                 keyId.getBytes(StandardCharsets.UTF_8), this);
     }
 
+    /**
+     * Sends encrypt request to YC KMS API
+     * @param algorithm cryptographic algorithm to be used for encryption; will be converted to the
+     *                  version of algorithm supported by YC KMS
+     * @param encryptionContext AAD context to be used for encryption
+     * @param dataKey data key to be encrypted
+     * @return data key encrypted by YC KMS
+     */
     @Override
     public DataKey<YcKmsMasterKey> encryptDataKey(CryptoAlgorithm algorithm, Map<String, String> encryptionContext,
                                                   DataKey<?> dataKey) {
@@ -69,7 +84,7 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
         SymmetricEncryptRequest request = SymmetricEncryptRequest.newBuilder()
                 .setKeyId(this.keyId)
                 .setPlaintext(ByteString.copyFrom(dataKey.getKey().getEncoded()))
-                .setAadContext(ByteString.copyFrom(encryptionContext == null ? null : convertEncryptionContext(encryptionContext)))
+                .setAadContext(ByteString.copyFrom(convertEncryptionContext(encryptionContext)))
                 .build();
 
         SymmetricEncryptResponse response = kmsCryptoService.encrypt(request);
@@ -78,15 +93,22 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
 
     }
 
+    /**
+     *
+     * @param algorithm cryptographic algorithm to be used for decryption; will be converted to the
+     *                  version of algorithm supported by YC KMS
+     * @param encryptedDataKeys collection of encrypted data keys to be used
+     * @param encryptionContext AAD context to be used for decryption
+     * @return the first data key from the supplied collection that was successfully decrypted
+     */
     @Override
-    public DataKey<YcKmsMasterKey> decryptDataKey(CryptoAlgorithm algorithm, Collection<? extends EncryptedDataKey> encryptedDataKeys, Map<String, String> encryptionContext) throws UnsupportedProviderException, AwsCryptoException {
+    public DataKey<YcKmsMasterKey> decryptDataKey(CryptoAlgorithm algorithm, Collection<? extends EncryptedDataKey> encryptedDataKeys, Map<String, String> encryptionContext) {
         // FIXME let's just ignore algorithm param
         for (EncryptedDataKey encryptedKey : encryptedDataKeys) {
             SymmetricDecryptRequest request = SymmetricDecryptRequest.newBuilder()
                     .setKeyId(this.keyId)
                     .setCiphertext(ByteString.copyFrom(encryptedKey.getEncryptedDataKey()))
-                    .setAadContext(ByteString.copyFrom(encryptionContext == null ?
-                            null : convertEncryptionContext(encryptionContext)))
+                    .setAadContext(ByteString.copyFrom(convertEncryptionContext(encryptionContext)))
                     .build();
 
             SymmetricDecryptResponse response;
@@ -124,6 +146,9 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
     }
 
     private static byte[] convertEncryptionContext(Map<String, String> context) {
+        if (context == null) {
+            return new byte[0];
+        }
         return context.entrySet().stream()
                 .map(entry -> String.format("%s:%s", entry.getKey(), entry.getValue()))
                 .sorted()

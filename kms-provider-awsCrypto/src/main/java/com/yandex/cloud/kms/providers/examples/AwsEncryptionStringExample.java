@@ -6,6 +6,9 @@ import org.apache.commons.lang3.Validate;
 import yandex.cloud.sdk.auth.Credentials;
 import yandex.cloud.sdk.auth.OauthToken;
 
+/**
+ * Simple string encryption / decryption example using YC KMS provider for AWS Encryption SDK
+ */
 public class AwsEncryptionStringExample {
 
     public static void main(final String[] args) {

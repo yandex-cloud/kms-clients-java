@@ -32,6 +32,9 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
     private final Supplier<Credentials> credentialsSupplier;
     private final Set<String> keyIds;
 
+    /**
+     * @return provider builder
+     */
     public static YcKmsMasterKeyProviderBuilder builder() {
         return new YcKmsMasterKeyProviderBuilder();
     }
@@ -43,14 +46,24 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
         this.keyIds = Collections.unmodifiableSet(keyIds);
     }
 
+    /**
+     * @return id of the provider supported
+     */
     @Override
     public String getDefaultProviderId() {
         return PROVIDER_NAME;
     }
 
+    /**
+     * Constructs master key object for given provider and keyId
+     * @param provider provider id, should be equal to "yc-kms"
+     * @param keyId key id to be used
+     * @return constructed master key object
+     * @throws UnsupportedProviderException if provider is not equal to "yc-kms"
+     */
     @Override
     public YcKmsMasterKey getMasterKey(String provider, String keyId)
-            throws UnsupportedProviderException, NoSuchMasterKeyException {
+            throws UnsupportedProviderException {
 
         validateProvider(provider);
 
@@ -73,6 +86,11 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
         return new YcKmsMasterKey(keyId, cryptoService);
     }
 
+    /**
+     * Bulk method for constructing master key objects
+     * @param request bulk request
+     * @return collection of created master key objects
+     */
     @Override
     public List<YcKmsMasterKey> getMasterKeysForEncryption(MasterKeyRequest request) {
         return keyIds.stream()
@@ -80,11 +98,19 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
                 .collect(Collectors.toList());
     }
 
+    /**
+     *
+     * @param algorithm cryptographic algorithm to be used for decryption; will be converted to the
+     *                  version of algorithm supported by YC KMS
+     * @param encryptedDataKeys collection of encrypted data key objects
+     * @param encryptionContext AAD context to be used for decryption
+     * @return collection of decrypted data keys
+     */
     @Override
     public DataKey<YcKmsMasterKey> decryptDataKey(CryptoAlgorithm algorithm,
                                                   Collection<? extends EncryptedDataKey> encryptedDataKeys,
                                                   Map<String, String> encryptionContext)
-            throws AwsCryptoException {
+    {
 
         for (EncryptedDataKey encryptedKey : encryptedDataKeys) {
             String keyId = new String(encryptedKey.getProviderInformation(), StandardCharsets.UTF_8);

@@ -17,6 +17,9 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 
+/**
+ * Example of streaming encryption / decryption using YC KMS provider for AWS Encryption SDK
+ */
 public class AwsEncryptionStreamingExample {
 
     public static void main(final String[] args) throws IOException {
