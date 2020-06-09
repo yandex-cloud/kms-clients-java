@@ -154,6 +154,7 @@
                 <artifactId>maven-gpg-plugin</artifactId>
             </plugin>
         </plugins>
+
     </build>
 
     <profiles>
