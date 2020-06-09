@@ -7,6 +7,11 @@
 
     <groupId>com.yandex.cloud</groupId>
     <artifactId>kms-provider-awscrypto</artifactId>
+    <name>YC KMS provider for AWS Encryption SDK</name>
+    <description>
+        Glue code to enable usage of Yandex Cloud KMS from AWS Encryption SDK
+    </description>
+
     <packaging>jar</packaging>
 
     <parent>
@@ -17,7 +22,6 @@
     </parent>
 
     <properties>
-        <kms-http-client.version>1.0</kms-http-client.version>
         <aws-crypto.version>1.6.0</aws-crypto.version>
     </properties>
 
@@ -42,5 +46,36 @@
             <artifactId>commons-io</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>ossrh</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

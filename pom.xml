@@ -16,7 +16,7 @@
     <scm>
         <connection>scm:git:https://github.com/yandex-cloud/kms-clients-java.git</connection>
         <developerConnection>scm:git:https://github.com/yandex-cloud/kms-clients-java.git</developerConnection>
-        <url>https://github.com/yandex-cloud/kms-clients-java/tree/master</url>
+        <url>https://github.com/yandex-cloud/kms-clients-java</url>
     </scm>
 
     <developers>
@@ -26,7 +26,20 @@
             <organization>Yandex LLC</organization>
             <organizationUrl>https://yandex.com/company/</organizationUrl>
         </developer>
+        <developer>
+            <name>Andrey Zamyslov</name>
+            <email>zamysel@yandex-team.ru</email>
+            <organization>Yandex LLC</organization>
+            <organizationUrl>https://yandex.com/company/</organizationUrl>
+        </developer>
     </developers>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
 
     <properties>
         <java.verison>8</java.verison>
@@ -39,7 +52,12 @@
         <commons-lang3.version>3.9</commons-lang3.version>
         <commons-codec.version>1.11</commons-codec.version>
 
-        <java-sdk.version>1.2.1</java-sdk.version>
+        <java-sdk.version>1.2.0</java-sdk.version>
+
+        <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
+        <maven-gpg-plugin.version>1.5</maven-gpg-plugin.version>
+        <nexus-staging-maven-plugin.version>1.6.7</nexus-staging-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -67,9 +85,95 @@
         </dependencies>
     </dependencyManagement>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven-source-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${maven-javadoc-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>${maven-gpg-plugin.version}</version>
+                    <configuration>
+                        <gpgArguments>
+                            <arg>--pinentry-mode</arg>
+                            <arg>loopback</arg>
+                        </gpgArguments>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>${nexus-staging-maven-plugin.version}</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <serverId>ossrh</serverId>
+                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                        <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>ossrh</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <modules>
         <module>kms-provider-awsCrypto</module>
         <module>kms-provider-tink</module>
     </modules>
+
 
 </project>
