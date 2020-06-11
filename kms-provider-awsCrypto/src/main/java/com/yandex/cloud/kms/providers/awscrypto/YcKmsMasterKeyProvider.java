@@ -101,9 +101,8 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
     }
 
     /**
-     *
-     * @param algorithm cryptographic algorithm to be used for decryption; will be converted to the
-     *                  version of algorithm supported by YC KMS
+     * Decrypts encrypted data key from the given collection of keys with KMS key
+     * @param algorithm cryptographic algorithm to be set in the returned data key metadata
      * @param encryptedDataKeys collection of encrypted data key objects
      * @param encryptionContext AAD context to be used for decryption
      * @return collection of decrypted data keys
