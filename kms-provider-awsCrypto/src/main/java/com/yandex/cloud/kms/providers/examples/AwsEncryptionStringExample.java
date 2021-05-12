@@ -3,26 +3,26 @@ package com.yandex.cloud.kms.providers.examples;
 import com.amazonaws.encryptionsdk.AwsCrypto;
 import com.yandex.cloud.kms.providers.awscrypto.YcKmsMasterKeyProvider;
 import org.apache.commons.lang3.Validate;
-import yandex.cloud.sdk.auth.Credentials;
-import yandex.cloud.sdk.auth.OauthToken;
+import yandex.cloud.sdk.auth.Auth;
+import yandex.cloud.sdk.auth.provider.CredentialProvider;
 
 /**
  * Basic string encryption / decryption example using YC KMS provider for AWS Encryption SDK
  */
 public class AwsEncryptionStringExample {
+    private static final String YCKMS_OAUTH = "YCKMS_OAUTH";
 
     public static void main(final String[] args) {
-        String token = ExampleUtil.envAsString("YCKMS_OAUTH");
-        String keyId = ExampleUtil.argAsString(args, 0);
-        String plaintext = ExampleUtil.argAsString(args, 1);
+        String keyId = AwsExampleUtil.argAsString(args, 0);
+        String plaintext = AwsExampleUtil.argAsString(args, 1);
 
-        Credentials credentials = new OauthToken(token);
+        CredentialProvider credentialProvider = Auth.oauthTokenBuilder().fromEnv(YCKMS_OAUTH).build();
 
-        String encrypted = encrypt(credentials, keyId, plaintext);
+        String encrypted = encrypt(credentialProvider, keyId, plaintext);
         System.out.printf("Ciphertext: %s\n", encrypted);
         System.out.printf("Ciphertext length: %d\n", encrypted.length());
 
-        String decrypted = decrypt(credentials, encrypted);
+        String decrypted = decrypt(credentialProvider, encrypted);
         System.out.printf("Decrypted: %s\n", decrypted);
         System.out.printf("Decrypted length: %d\n", decrypted.length());
 
@@ -34,12 +34,11 @@ public class AwsEncryptionStringExample {
     /*
      *  Example of basic encryption with AwsCrypto
      */
-    private static String encrypt(Credentials credentials, String keyId, String plaintext) {
-        YcKmsMasterKeyProvider provider = YcKmsMasterKeyProvider.builder()
-                .setCredentialsSupplier(() -> credentials)
-                .setKeyId(keyId)
-                .build();
-        AwsCrypto awsCrypto = new AwsCrypto();
+    private static String encrypt(CredentialProvider credentialProvider, String keyId, String plaintext) {
+        YcKmsMasterKeyProvider provider = new YcKmsMasterKeyProvider()
+                .withCredentials(credentialProvider)
+                .withKeyId(keyId);
+        AwsCrypto awsCrypto = AwsCrypto.standard();
 
         return awsCrypto.encryptString(provider, plaintext).getResult();
     }
@@ -47,11 +46,10 @@ public class AwsEncryptionStringExample {
     /*
      *  Example of basic decryption with AwsCrypto
      */
-    private static String decrypt(Credentials credentials, String ciphertext) {
-        YcKmsMasterKeyProvider provider = YcKmsMasterKeyProvider.builder()
-                .setCredentialsSupplier(() -> credentials)
-                .build();
-        AwsCrypto awsCrypto = new AwsCrypto();
+    private static String decrypt(CredentialProvider credentialProvider, String ciphertext) {
+        YcKmsMasterKeyProvider provider = new YcKmsMasterKeyProvider()
+                .withCredentials(credentialProvider);
+        AwsCrypto awsCrypto = AwsCrypto.standard();
 
         return awsCrypto.decryptString(provider, ciphertext).getResult();
     }

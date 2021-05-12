@@ -5,8 +5,8 @@ import com.yandex.cloud.kms.providers.awscrypto.YcKmsMasterKeyProvider;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
-import yandex.cloud.sdk.auth.Credentials;
-import yandex.cloud.sdk.auth.OauthToken;
+import yandex.cloud.sdk.auth.Auth;
+import yandex.cloud.sdk.auth.provider.CredentialProvider;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,22 +21,22 @@ import java.nio.file.Files;
  * Example of streaming encryption / decryption using YC KMS provider for AWS Encryption SDK
  */
 public class AwsEncryptionStreamingExample {
+    private static final String YCKMS_OAUTH = "YCKMS_OAUTH";
 
     public static void main(final String[] args) throws IOException {
-        String token = ExampleUtil.envAsString("YCKMS_OAUTH");
-        String keyId = ExampleUtil.argAsString(args, 0);
-        File plaintextFile = new File(ExampleUtil.argAsString(args, 1));
+        String keyId = AwsExampleUtil.argAsString(args, 0);
+        File plaintextFile = new File(AwsExampleUtil.argAsString(args, 1));
 
-        Credentials credentials = new OauthToken(token);
+        CredentialProvider credentialProvider = Auth.oauthTokenBuilder().fromEnv(YCKMS_OAUTH).build();
 
-        File encryptedFile = ExampleUtil.fileWithSuffix(plaintextFile, ".encrypted");
-        File decryptedFile = ExampleUtil.fileWithSuffix(plaintextFile, ".decrypted");
+        File encryptedFile = AwsExampleUtil.fileWithSuffix(plaintextFile, ".encrypted");
+        File decryptedFile = AwsExampleUtil.fileWithSuffix(plaintextFile, ".decrypted");
 
-        encryptToFile(credentials, keyId, plaintextFile, encryptedFile);
+        encryptToFile(credentialProvider, keyId, plaintextFile, encryptedFile);
         System.out.printf("Ciphertext file: %s\n", encryptedFile.toString());
         System.out.printf("Ciphertext file length: %d\n", Files.size(encryptedFile.toPath()));
 
-        decryptFromFile(credentials, encryptedFile, decryptedFile);
+        decryptFromFile(credentialProvider, encryptedFile, decryptedFile);
         System.out.printf("Decrypted file: %s\n", decryptedFile.toString());
         System.out.printf("Decrypted file length: %d\n", Files.size(decryptedFile.toPath()));
 
@@ -48,12 +48,11 @@ public class AwsEncryptionStreamingExample {
     /*
      *  Example of streaming encryption with AwsCrypto
      */
-    private static void encryptToFile(Credentials credentials, String keyId, File plaintextFile, File encryptedFile) {
-        YcKmsMasterKeyProvider provider = YcKmsMasterKeyProvider.builder()
-                .setCredentialsSupplier(() -> credentials)
-                .setKeyId(keyId)
-                .build();
-        AwsCrypto awsCrypto = new AwsCrypto();
+    private static void encryptToFile(CredentialProvider credentialProvider, String keyId, File plaintextFile, File encryptedFile) {
+        YcKmsMasterKeyProvider provider = new YcKmsMasterKeyProvider()
+                .withCredentials(credentialProvider)
+                .withKeyId(keyId);
+        AwsCrypto awsCrypto = AwsCrypto.standard();
 
         try (
                 InputStream inputStream = new FileInputStream(plaintextFile);
@@ -68,11 +67,10 @@ public class AwsEncryptionStreamingExample {
     /*
      *  Example of streaming decryption with AwsCrypto
      */
-    private static void decryptFromFile(Credentials credentials, File encryptedFile, File decryptedFile) {
-        AwsCrypto awsCrypto = new AwsCrypto();
-        YcKmsMasterKeyProvider provider = YcKmsMasterKeyProvider.builder()
-                .setCredentialsSupplier(() -> credentials)
-                .build();
+    private static void decryptFromFile(CredentialProvider credentialProvider, File encryptedFile, File decryptedFile) {
+        AwsCrypto awsCrypto = AwsCrypto.standard();
+        YcKmsMasterKeyProvider provider = new YcKmsMasterKeyProvider()
+                .withCredentials(credentialProvider);
 
         try (
                 InputStream inputStream = awsCrypto.createDecryptingStream(provider, new FileInputStream(encryptedFile));

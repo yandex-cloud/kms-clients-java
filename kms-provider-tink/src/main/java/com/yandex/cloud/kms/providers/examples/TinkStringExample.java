@@ -9,6 +9,7 @@ import com.yandex.cloud.kms.providers.tink.YcKmsClient;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.lang3.Validate;
 import yandex.cloud.sdk.auth.Auth;
+import yandex.cloud.sdk.auth.provider.CredentialProvider;
 
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
@@ -22,21 +23,22 @@ public class TinkStringExample {
     private static final String YCKMS_OAUTH = "YCKMS_OAUTH";
 
     public static void main(final String[] args) throws GeneralSecurityException {
-        Validate.isTrue(args.length >= 2, "Invalid number of arguments");
+        String keyId = TinkExampleUtil.argAsString(args, 0); // key id as a first argument
+        String keyUri = String.format("yc-kms://%s", keyId);
 
         // prepare data
-        String keyId = String.format("yc-kms://%s", args[0]);
-        byte[] plaintext = args[1].getBytes(Charsets.UTF_8);
+        byte[] plaintext = TinkExampleUtil.argAsString(args, 1).getBytes(Charsets.UTF_8);
         byte[] context = "Foo: Bar".getBytes(Charsets.UTF_8);
 
         // register YC KMS provider in tink's registry
-        KmsClients.add(new YcKmsClient(() -> Auth.fromEnv(Auth::oauthToken, YCKMS_OAUTH)));
+        CredentialProvider credentialProvider = Auth.oauthTokenBuilder().fromEnv(YCKMS_OAUTH).build();
+        KmsClients.add(new YcKmsClient(credentialProvider));
 
         {
             // Basic AEAD example - encryption using remote encrypt/decrypt API
             System.out.println("Basic AEAD");
 
-            Aead kmsAead = KmsClients.get(keyId).getAead(keyId);
+            Aead kmsAead = KmsClients.get(keyUri).getAead(keyUri);
             testAead(kmsAead, kmsAead, plaintext, context);
         }
 
@@ -46,7 +48,7 @@ public class TinkStringExample {
             // Envelope encryption AEAD example: encrypt data locally with pre-generated DEK and then encrypts DEK using KMS
             System.out.println("Envelope encryption");
 
-            Aead kmsAead = KmsClients.get(keyId).getAead(keyId);
+            Aead kmsAead = KmsClients.get(keyUri).getAead(keyUri);
             AeadConfig.register();
 
             Aead encryptAead = new KmsEnvelopeAead(AeadKeyTemplates.AES256_GCM, kmsAead);

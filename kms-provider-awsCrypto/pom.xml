@@ -17,18 +17,18 @@
     <parent>
         <groupId>com.yandex.cloud</groupId>
         <artifactId>kms-external-clients</artifactId>
-        <version>1.0</version>
+        <version>2.1</version>
         <relativePath>..</relativePath>
     </parent>
 
     <properties>
-        <aws-crypto.version>1.6.0</aws-crypto.version>
+        <aws-crypto.version>2.0.0</aws-crypto.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.yandex.cloud</groupId>
-            <artifactId>sdk</artifactId>
+            <artifactId>java-sdk-services</artifactId>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>

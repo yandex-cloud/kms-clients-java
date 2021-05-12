@@ -8,8 +8,8 @@ import com.google.crypto.tink.KmsClients;
 import com.google.crypto.tink.aead.AeadConfig;
 import com.google.crypto.tink.aead.AeadKeyTemplates;
 import com.yandex.cloud.kms.providers.tink.YcKmsClient;
-import org.apache.commons.lang3.Validate;
 import yandex.cloud.sdk.auth.Auth;
+import yandex.cloud.sdk.auth.provider.CredentialProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,17 +24,18 @@ public class TinkFileExample {
     private static final String YCKMS_OAUTH = "YCKMS_OAUTH";
 
     public static void main(String[] args) throws GeneralSecurityException, IOException {
-        Validate.isTrue(args.length >= 2, "Invalid number of arguments");
-        String ycKmsKeyId = String.format("yc-kms://%s", args[0]); // key id as a first argument
-        String filename = args[1]; // key store file name to be created as a second argument
+        String keyId = TinkExampleUtil.argAsString(args, 0); // key id as a first argument
+        String keyUri = String.format("yc-kms://%s", keyId);
+        String filename = TinkExampleUtil.argAsString(args, 1); // key store file name to be created as a second argument
 
         // first let's register our YC KMS client with Tink clients' registry
-        KmsClients.add(new YcKmsClient(() -> Auth.fromEnv(Auth::oauthToken, YCKMS_OAUTH))); // take OAUTH token from env
+        CredentialProvider credentialProvider = Auth.oauthTokenBuilder().fromEnv(YCKMS_OAUTH).build();
+        KmsClients.add(new YcKmsClient(credentialProvider)); // take OAUTH token from env
 
         // retrieve YC KMS client according to the key prefix
-        KmsClient kmsClient = KmsClients.get(ycKmsKeyId);
+        KmsClient kmsClient = KmsClients.get(keyUri);
         // get kms-powered aead primitive
-        Aead ycKmsAead = kmsClient.getAead(ycKmsKeyId);
+        Aead ycKmsAead = kmsClient.getAead(keyUri);
 
         // let tink know we'd like to use AEAD primitive
         AeadConfig.register();

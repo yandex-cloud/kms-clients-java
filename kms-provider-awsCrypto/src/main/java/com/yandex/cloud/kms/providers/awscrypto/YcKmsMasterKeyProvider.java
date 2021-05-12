@@ -9,17 +9,16 @@ import com.amazonaws.encryptionsdk.MasterKeyRequest;
 import com.amazonaws.encryptionsdk.exception.UnsupportedProviderException;
 import yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc;
 import yandex.cloud.sdk.ServiceFactory;
-import yandex.cloud.sdk.ServiceFactoryConfig;
-import yandex.cloud.sdk.auth.Credentials;
+import yandex.cloud.sdk.auth.Auth;
+import yandex.cloud.sdk.auth.provider.CredentialProvider;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -29,23 +28,17 @@ import java.util.stream.Collectors;
 public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
     static final String PROVIDER_NAME = "yc-kms";
 
-    private final String host;
-    private final int port;
-    private final Supplier<Credentials> credentialsSupplier;
-    private final Set<String> keyIds;
+    private String endpoint;
+    private CredentialProvider credentialProvider;
+    private Collection<String> keyIds;
 
-    /**
-     * @return provider builder
-     */
-    public static YcKmsMasterKeyProviderBuilder builder() {
-        return new YcKmsMasterKeyProviderBuilder();
+    public YcKmsMasterKeyProvider() {
     }
 
-    YcKmsMasterKeyProvider(String host, int port, Supplier<Credentials> credentialsSupplier, Set<String> keyIds) {
-        this.host = host;
-        this.port = port;
-        this.credentialsSupplier = credentialsSupplier;
-        this.keyIds = Collections.unmodifiableSet(keyIds);
+    public YcKmsMasterKeyProvider(String endpoint, CredentialProvider credentialProvider, Collection<String> keyIds) {
+        this.endpoint = endpoint;
+        this.credentialProvider = credentialProvider;
+        this.keyIds = Collections.unmodifiableCollection(keyIds);
     }
 
     /**
@@ -69,16 +62,17 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
 
         validateProvider(provider);
 
-        if (credentialsSupplier == null) {
+        if (credentialProvider == null) {
             throw new IllegalStateException("credentials was not provided for KMS client");
         }
-        ServiceFactoryConfig.ServiceFactoryConfigBuilder configBuilder = ServiceFactoryConfig.builder()
-                .credentials(credentialsSupplier.get())
+        ServiceFactory.ServiceFactoryBuilder serviceFactoryBuilder = ServiceFactory.builder()
+                .credentialProvider(credentialProvider)
                 .requestTimeout(Duration.ofSeconds(10));
-        if (host != null) {
-            configBuilder = configBuilder.endpoint(host).port(port);
+
+        if (endpoint != null) {
+            serviceFactoryBuilder = serviceFactoryBuilder.endpoint(endpoint);
         }
-        ServiceFactory factory = new ServiceFactory(configBuilder.build());
+        ServiceFactory factory = serviceFactoryBuilder.build();
         SymmetricCryptoServiceGrpc.SymmetricCryptoServiceBlockingStub cryptoService =
                 factory.create(
                         SymmetricCryptoServiceGrpc.SymmetricCryptoServiceBlockingStub.class,
@@ -101,8 +95,64 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
     }
 
     /**
+     * Specifies static OAuth token as a credentials
+     *
+     * @param credentialPath file path to OAuth token
+     * @return instance of YcKmsMasterKeyProvider with injected credentials
+     */
+    public YcKmsMasterKeyProvider withCredentials(String credentialPath) {
+        this.credentialProvider = Auth.oauthTokenBuilder().fromFile(Paths.get(credentialPath)).build();
+        return this;
+    }
+
+    /**
+     * Specifies dynamic credentials provider for the KMS client
+     *
+     * @param credentialProvider function that returns credentials
+     * @return instance of YcKmsMasterKeyProvider with injected credentials
+     */
+    public YcKmsMasterKeyProvider withCredentials(CredentialProvider credentialProvider) {
+        this.credentialProvider = credentialProvider;
+        return this;
+    }
+
+    /**
+     * Specifies keys for the KMS client
+     *
+     * @param keyIds collection of YC KMS key ids to be used
+     * @return instance of YcKmsMasterKeyProvider with injected YC KMS keys
+     */
+    public YcKmsMasterKeyProvider withKeyIds(Collection<String> keyIds) {
+        this.keyIds = Collections.unmodifiableCollection(keyIds);
+        return this;
+    }
+
+    /**
+     * Specifies single key for the KMS client
+     *
+     * @param keyId single YC KMS key id to be used
+     * @return instance of YcKmsMasterKeyProvider with injected YC KMS key
+     */
+    public YcKmsMasterKeyProvider withKeyId(String keyId) {
+        this.keyIds = Collections.singleton(keyId);
+        return this;
+    }
+
+    /**
+     * Specifies endpoint for the KMS client (optional)
+     *
+     * @param endpoint
+     * @return instance of KmsClient with injected endpoint
+     */
+    public YcKmsMasterKeyProvider withEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+        return this;
+    }
+
+    /**
      * Decrypts encrypted data key from the given collection of keys with KMS key
-     * @param algorithm cryptographic algorithm to be set in the returned data key metadata
+     *
+     * @param algorithm         cryptographic algorithm to be set in the returned data key metadata
      * @param encryptedDataKeys collection of encrypted data key objects
      * @param encryptionContext AAD context to be used for decryption
      * @return collection of decrypted data keys
