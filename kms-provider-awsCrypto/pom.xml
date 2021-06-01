@@ -22,7 +22,7 @@
     </parent>
 
     <properties>
-        <aws-crypto.version>2.0.0</aws-crypto.version>
+        <aws-crypto.version>2.2.0</aws-crypto.version>
     </properties>
 
     <dependencies>
