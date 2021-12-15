@@ -2,12 +2,15 @@ package com.yandex.cloud.kms.providers.tink;
 
 import com.google.crypto.tink.Aead;
 import com.google.protobuf.ByteString;
+import com.yandex.cloud.kms.providers.config.RetryConfig;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 
+import java.util.function.Function;
+
+import static com.yandex.cloud.kms.providers.util.RetryUtils.createRetryPolicy;
 import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc.SymmetricCryptoServiceBlockingStub;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricDecryptRequest;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricDecryptResponse;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricEncryptRequest;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricEncryptResponse;
+import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.*;
 
 /**
  * Represents single YC KMS key; allows to perform encrypt/decrypt operations on this key.
@@ -16,15 +19,18 @@ public class YcKmsAead implements Aead {
 
     private final SymmetricCryptoServiceBlockingStub cryptoService;
     private final String keyId;
+    private RetryPolicy<Object> retryPolicy;
 
-    YcKmsAead(SymmetricCryptoServiceBlockingStub cryptoService, String keyId) {
+    YcKmsAead(SymmetricCryptoServiceBlockingStub cryptoService, String keyId, RetryConfig retryConfig) {
         this.cryptoService = cryptoService;
         this.keyId = keyId;
+        this.retryPolicy = createRetryPolicy(retryConfig);
     }
 
     /**
      * Encrypts given plaintext on this KMS key
-     * @param plaintext plaintext to encrypt
+     *
+     * @param plaintext      plaintext to encrypt
      * @param associatedData ADD context
      * @return encrypted ciphertext
      */
@@ -36,7 +42,10 @@ public class YcKmsAead implements Aead {
                 .setAadContext(ByteString.copyFrom(associatedData))
                 .build();
 
-        SymmetricEncryptResponse response = cryptoService.encrypt(request);
+        SymmetricEncryptResponse response = doRequest(
+                cryptoService::encrypt,
+                request
+        );
         return response.getCiphertext().toByteArray();
     }
 
@@ -54,7 +63,15 @@ public class YcKmsAead implements Aead {
                 .setAadContext(ByteString.copyFrom(associatedData))
                 .build();
 
-        SymmetricDecryptResponse response = cryptoService.decrypt(request);
+        SymmetricDecryptResponse response = doRequest(
+                cryptoService::decrypt,
+                request
+        );
         return response.getPlaintext().toByteArray();
+    }
+
+    private <REQ, RES> RES doRequest(Function<REQ, RES> function, REQ request) {
+        return Failsafe.with(retryPolicy)
+                .get(context -> function.apply(request));
     }
 }

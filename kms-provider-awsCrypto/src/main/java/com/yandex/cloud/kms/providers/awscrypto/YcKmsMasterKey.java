@@ -5,6 +5,9 @@ import com.amazonaws.encryptionsdk.DataKey;
 import com.amazonaws.encryptionsdk.EncryptedDataKey;
 import com.amazonaws.encryptionsdk.MasterKey;
 import com.google.protobuf.ByteString;
+import com.yandex.cloud.kms.providers.config.RetryConfig;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.apache.commons.lang3.NotImplementedException;
 import yandex.cloud.api.kms.v1.SymmetricKeyOuterClass;
 
@@ -13,15 +16,12 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.yandex.cloud.kms.providers.util.RetryUtils.createRetryPolicy;
 import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc.SymmetricCryptoServiceBlockingStub;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.GenerateDataKeyRequest;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.GenerateDataKeyResponse;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricDecryptRequest;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricDecryptResponse;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricEncryptRequest;
-import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.SymmetricEncryptResponse;
+import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.*;
 import static yandex.cloud.api.kms.v1.SymmetricKeyOuterClass.SymmetricAlgorithm;
 
 /**
@@ -31,10 +31,16 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
 
     private final SymmetricCryptoServiceBlockingStub kmsCryptoService;
     private final String keyId;
+    private RetryPolicy<Object> retryPolicy;
 
     YcKmsMasterKey(String keyId, SymmetricCryptoServiceBlockingStub kmsCryptoService) {
         this.keyId = keyId;
         this.kmsCryptoService = kmsCryptoService;
+    }
+
+    YcKmsMasterKey(String keyId, SymmetricCryptoServiceBlockingStub kmsCryptoService, RetryConfig retryConfig) {
+        this(keyId, kmsCryptoService);
+        this.retryPolicy = createRetryPolicy(retryConfig);
     }
 
     @Override
@@ -62,7 +68,10 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
                 .setAadContext(ByteString.copyFrom(convertEncryptionContext(encryptionContext)))
                 .setSkipPlaintext(false)
                 .build();
-        GenerateDataKeyResponse response = kmsCryptoService.generateDataKey(request);
+        GenerateDataKeyResponse response = doRequest(
+                kmsCryptoService::generateDataKey,
+                request
+        );
         SecretKey secretKey = new SecretKeySpec(response.getDataKeyPlaintext().toByteArray(),
                 awsAlgorithm.getDataKeyAlgo());
         return new DataKey<>(secretKey, response.getDataKeyCiphertext().toByteArray(),
@@ -86,7 +95,10 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
                 .setAadContext(ByteString.copyFrom(convertEncryptionContext(encryptionContext)))
                 .build();
 
-        SymmetricEncryptResponse response = kmsCryptoService.encrypt(request);
+        SymmetricEncryptResponse response = doRequest(
+                kmsCryptoService::encrypt,
+                request
+        );
         return new DataKey<>(dataKey.getKey(), response.getCiphertext().toByteArray(),
                 keyId.getBytes(StandardCharsets.UTF_8), this);
 
@@ -110,7 +122,9 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
 
             SymmetricDecryptResponse response;
             try {
-                response = kmsCryptoService.decrypt(request);
+                response = doRequest(
+                        kmsCryptoService::decrypt,
+                        request);
                 SecretKey secretKey = new SecretKeySpec(response.getPlaintext().toByteArray(),
                         algorithm.getDataKeyAlgo());
                 return new DataKey<>(secretKey, encryptedKey.getEncryptedDataKey(),
@@ -154,5 +168,10 @@ public class YcKmsMasterKey extends MasterKey<YcKmsMasterKey> {
                 .sorted()
                 .collect(Collectors.joining(","))
                 .getBytes(StandardCharsets.UTF_8);
+    }
+
+    private <REQ, RES> RES doRequest(Function<REQ, RES> function, REQ request) {
+        return Failsafe.with(retryPolicy)
+                .get(context -> function.apply(request));
     }
 }

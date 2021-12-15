@@ -1,12 +1,8 @@
 package com.yandex.cloud.kms.providers.awscrypto;
 
-import com.amazonaws.encryptionsdk.CryptoAlgorithm;
-import com.amazonaws.encryptionsdk.DataKey;
-import com.amazonaws.encryptionsdk.EncryptedDataKey;
-import com.amazonaws.encryptionsdk.MasterKey;
-import com.amazonaws.encryptionsdk.MasterKeyProvider;
-import com.amazonaws.encryptionsdk.MasterKeyRequest;
+import com.amazonaws.encryptionsdk.*;
 import com.amazonaws.encryptionsdk.exception.UnsupportedProviderException;
+import com.yandex.cloud.kms.providers.config.RetryConfig;
 import yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc;
 import yandex.cloud.sdk.ServiceFactory;
 import yandex.cloud.sdk.auth.Auth;
@@ -31,14 +27,26 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
     private String endpoint;
     private CredentialProvider credentialProvider;
     private Collection<String> keyIds;
+    private RetryConfig retryConfig;
 
     public YcKmsMasterKeyProvider() {
+    }
+
+    public YcKmsMasterKeyProvider(RetryConfig retryConfig) {
+        this.retryConfig = retryConfig;
     }
 
     public YcKmsMasterKeyProvider(String endpoint, CredentialProvider credentialProvider, Collection<String> keyIds) {
         this.endpoint = endpoint;
         this.credentialProvider = credentialProvider;
         this.keyIds = Collections.unmodifiableCollection(keyIds);
+    }
+
+    public YcKmsMasterKeyProvider(String endpoint, CredentialProvider credentialProvider, Collection<String> keyIds, RetryConfig retryConfig) {
+        this.endpoint = endpoint;
+        this.credentialProvider = credentialProvider;
+        this.keyIds = Collections.unmodifiableCollection(keyIds);
+        this.retryConfig = retryConfig;
     }
 
     /**
@@ -79,7 +87,7 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
                         SymmetricCryptoServiceGrpc::newBlockingStub);
 
 
-        return new YcKmsMasterKey(keyId, cryptoService);
+        return new YcKmsMasterKey(keyId, cryptoService, retryConfig);
     }
 
     /**

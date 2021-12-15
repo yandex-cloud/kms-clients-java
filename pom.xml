@@ -58,6 +58,7 @@
         <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>1.5</maven-gpg-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.7</nexus-staging-maven-plugin.version>
+        <net-jodah.failsafe.version>2.0.1</net-jodah.failsafe.version>
     </properties>
 
     <dependencyManagement>
@@ -81,6 +82,11 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.jodah</groupId>
+                <artifactId>failsafe</artifactId>
+                <version>${net-jodah.failsafe.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

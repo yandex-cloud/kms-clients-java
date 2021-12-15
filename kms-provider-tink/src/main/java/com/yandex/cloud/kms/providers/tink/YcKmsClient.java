@@ -2,6 +2,7 @@ package com.yandex.cloud.kms.providers.tink;
 
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.KmsClient;
+import com.yandex.cloud.kms.providers.config.RetryConfig;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc;
@@ -23,8 +24,13 @@ public class YcKmsClient implements KmsClient {
 
     private CredentialProvider credentialProvider;
     private String endpoint;
+    private RetryConfig retryConfig;
 
     public YcKmsClient() {
+    }
+
+    public YcKmsClient(RetryConfig retryConfig) {
+        this.retryConfig = retryConfig;
     }
 
     /**
@@ -34,6 +40,11 @@ public class YcKmsClient implements KmsClient {
      */
     public YcKmsClient(CredentialProvider credentialProvider) {
         this.credentialProvider = credentialProvider;
+    }
+
+    public YcKmsClient(CredentialProvider credentialProvider, RetryConfig retryConfig) {
+        this(credentialProvider);
+        this.retryConfig = retryConfig;
     }
 
     /**
@@ -115,7 +126,7 @@ public class YcKmsClient implements KmsClient {
                         SymmetricCryptoServiceGrpc.SymmetricCryptoServiceBlockingStub.class,
                         SymmetricCryptoServiceGrpc::newBlockingStub);
 
-        return new YcKmsAead(cryptoService, trimPrefix(keyUri));
+        return new YcKmsAead(cryptoService, trimPrefix(keyUri), retryConfig);
     }
 
     private static String trimPrefix(String keyUri) {

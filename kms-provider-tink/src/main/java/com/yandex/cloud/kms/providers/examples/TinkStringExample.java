@@ -5,6 +5,7 @@ import com.google.crypto.tink.KmsClients;
 import com.google.crypto.tink.aead.AeadConfig;
 import com.google.crypto.tink.aead.AeadKeyTemplates;
 import com.google.crypto.tink.aead.KmsEnvelopeAead;
+import com.yandex.cloud.kms.providers.config.RetryConfig;
 import com.yandex.cloud.kms.providers.tink.YcKmsClient;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.lang3.Validate;
@@ -32,7 +33,7 @@ public class TinkStringExample {
 
         // register YC KMS provider in tink's registry
         CredentialProvider credentialProvider = Auth.oauthTokenBuilder().fromEnv(YCKMS_OAUTH).build();
-        KmsClients.add(new YcKmsClient(credentialProvider));
+        KmsClients.add(new YcKmsClient(credentialProvider, new RetryConfig(2, 2, 3)));
 
         {
             // Basic AEAD example - encryption using remote encrypt/decrypt API
