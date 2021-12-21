@@ -1,6 +1,6 @@
-package com.yandex.cloud.kms.providers.util;
+package com.yandex.cloud.kms.providers.tink.util;
 
-import com.yandex.cloud.kms.providers.config.RetryConfig;
+import com.yandex.cloud.kms.providers.tink.config.RetryConfig;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import net.jodah.failsafe.RetryPolicy;
@@ -11,12 +11,11 @@ import java.util.Set;
 
 public class RetryUtils {
 
-    public final static Set<Status.Code> retryExceptionCodes = new HashSet<Status.Code>() {{
+    private final static Set<Status.Code> retryExceptionCodes = new HashSet<Status.Code>() {{
         add(Status.UNAVAILABLE.getCode());
         add(Status.DEADLINE_EXCEEDED.getCode());
         add(Status.INTERNAL.getCode());
     }};
-
 
     public static <T> RetryPolicy<T> createRetryPolicy(RetryConfig retryConfig) {
         if (retryConfig == null) {

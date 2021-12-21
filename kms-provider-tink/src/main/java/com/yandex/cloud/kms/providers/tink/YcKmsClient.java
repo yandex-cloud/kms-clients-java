@@ -2,7 +2,7 @@ package com.yandex.cloud.kms.providers.tink;
 
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.KmsClient;
-import com.yandex.cloud.kms.providers.config.RetryConfig;
+import com.yandex.cloud.kms.providers.tink.config.RetryConfig;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc;

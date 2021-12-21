@@ -2,7 +2,7 @@ package com.yandex.cloud.kms.providers.awscrypto;
 
 import com.amazonaws.encryptionsdk.*;
 import com.amazonaws.encryptionsdk.exception.UnsupportedProviderException;
-import com.yandex.cloud.kms.providers.config.RetryConfig;
+import com.yandex.cloud.kms.providers.awscrypto.config.RetryConfig;
 import yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc;
 import yandex.cloud.sdk.ServiceFactory;
 import yandex.cloud.sdk.auth.Auth;

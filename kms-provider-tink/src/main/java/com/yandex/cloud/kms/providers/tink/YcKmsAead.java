@@ -2,13 +2,13 @@ package com.yandex.cloud.kms.providers.tink;
 
 import com.google.crypto.tink.Aead;
 import com.google.protobuf.ByteString;
-import com.yandex.cloud.kms.providers.config.RetryConfig;
+import com.yandex.cloud.kms.providers.tink.config.RetryConfig;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 
 import java.util.function.Function;
 
-import static com.yandex.cloud.kms.providers.util.RetryUtils.createRetryPolicy;
+import static com.yandex.cloud.kms.providers.tink.util.RetryUtils.createRetryPolicy;
 import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc.SymmetricCryptoServiceBlockingStub;
 import static yandex.cloud.api.kms.v1.SymmetricCryptoServiceOuterClass.*;
 
