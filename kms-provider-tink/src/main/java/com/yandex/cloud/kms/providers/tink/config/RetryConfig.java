@@ -3,7 +3,7 @@ package com.yandex.cloud.kms.providers.tink.config;
 public class RetryConfig {
     private int maxRetry = 3;
     private int delay = 2;
-    private int maxDelay = 2;
+    private int maxDelay = 4;
 
     public RetryConfig(int maxRetry, int delay, int maxDelay) {
         this.delay = delay;
