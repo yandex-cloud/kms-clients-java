@@ -6,6 +6,7 @@ import com.yandex.cloud.kms.providers.tink.config.RetryConfig;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc;
+import yandex.cloud.sdk.ChannelFactory;
 import yandex.cloud.sdk.ServiceFactory;
 import yandex.cloud.sdk.auth.Auth;
 import yandex.cloud.sdk.auth.provider.CredentialProvider;
@@ -24,6 +25,7 @@ public class YcKmsClient implements KmsClient {
 
     private CredentialProvider credentialProvider;
     private String endpoint;
+    private ChannelFactory channelFactory;
     private RetryConfig retryConfig;
 
     public YcKmsClient() {
@@ -97,6 +99,19 @@ public class YcKmsClient implements KmsClient {
      */
     public KmsClient withEndpoint(String endpoint) {
         this.endpoint = endpoint;
+        this.channelFactory = null;
+        return this;
+    }
+
+    /**
+     * Specifies channel factory for the KMS client (optional)
+     *
+     * @param channelFactory
+     * @return instance of KmsClient with injected channel factory
+     */
+    public KmsClient withChannelFactory(ChannelFactory channelFactory) {
+        this.channelFactory = channelFactory;
+        this.endpoint = null;
         return this;
     }
 
@@ -116,6 +131,9 @@ public class YcKmsClient implements KmsClient {
                 .credentialProvider(credentialProvider)
                 .requestTimeout(Duration.ofSeconds(10));
 
+        if (channelFactory != null) {
+            factoryBuilder.channelFactory(channelFactory);
+        }
         if (endpoint != null) {
             factoryBuilder.endpoint(endpoint);
         }

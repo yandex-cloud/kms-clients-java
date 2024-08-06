@@ -4,6 +4,7 @@ import com.amazonaws.encryptionsdk.*;
 import com.amazonaws.encryptionsdk.exception.UnsupportedProviderException;
 import com.yandex.cloud.kms.providers.awscrypto.config.RetryConfig;
 import yandex.cloud.api.kms.v1.SymmetricCryptoServiceGrpc;
+import yandex.cloud.sdk.ChannelFactory;
 import yandex.cloud.sdk.ServiceFactory;
 import yandex.cloud.sdk.auth.Auth;
 import yandex.cloud.sdk.auth.provider.CredentialProvider;
@@ -25,6 +26,7 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
     static final String PROVIDER_NAME = "yc-kms";
 
     private String endpoint;
+    private ChannelFactory channelFactory;
     private CredentialProvider credentialProvider;
     private Collection<String> keyIds;
     private RetryConfig retryConfig;
@@ -77,6 +79,9 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
                 .credentialProvider(credentialProvider)
                 .requestTimeout(Duration.ofSeconds(10));
 
+        if (channelFactory != null) {
+            serviceFactoryBuilder = serviceFactoryBuilder.channelFactory(channelFactory);
+        }
         if (endpoint != null) {
             serviceFactoryBuilder = serviceFactoryBuilder.endpoint(endpoint);
         }
@@ -150,10 +155,23 @@ public class YcKmsMasterKeyProvider extends MasterKeyProvider<YcKmsMasterKey> {
      * Specifies endpoint for the KMS client (optional)
      *
      * @param endpoint
-     * @return instance of KmsClient with injected endpoint
+     * @return instance of YcKmsMasterKeyProvider with injected endpoint
      */
     public YcKmsMasterKeyProvider withEndpoint(String endpoint) {
         this.endpoint = endpoint;
+        this.channelFactory = null;
+        return this;
+    }
+
+    /**
+     * Specifies channel factory for the KMS client (optional)
+     *
+     * @param channelFactory
+     * @return instance of YcKmsMasterKeyProvider with injected channelFactory
+     */
+    public YcKmsMasterKeyProvider withChannelFactory(ChannelFactory channelFactory) {
+        this.channelFactory = channelFactory;
+        this.endpoint = null;
         return this;
     }
 

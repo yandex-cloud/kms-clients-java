@@ -53,7 +53,10 @@ class AwsEncryptionTest {
         String data = args[1]; // data to encrypt
 
         // initialize AWS Encryption framework, algorithm defaults to AES GCM 256bit
-        AwsCrypto crypto = new AwsCrypto();
+        // ForbidEncryptAllowDecrypt
+        AwsCrypto crypto = AwsCrypto.builder()
+                .withCommitmentPolicy(CommitmentPolicy.ForbidEncryptAllowDecrypt)
+                .build();
 
         // set up YC KMS provider
         YcKmsMasterKeyProvider prov = YcKmsMasterKeyProvider.builder()
