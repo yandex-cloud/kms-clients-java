@@ -22,7 +22,7 @@
     </parent>
 
     <properties>
-        <tink.version>1.3.0-rc1</tink.version>
+        <tink.version>1.5.0</tink.version>
     </properties>
 
     <dependencies>
